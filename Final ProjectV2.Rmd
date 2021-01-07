@@ -1,0 +1,92 @@
+---
+title: "Modeling and prediction for movies"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+
+```{r load-data}
+load("/Users/ajitsingh/Downloads/_e1fe0c85abec6f73c72d73926884eaca_movies.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+The data is from 651 movies. The movies were randomly sampled. The conclusions from this report can be generalized to all movies. No causation can be established from this report, since this is not an experiment. The only thing that can be established in this report is an association between variables. Random assignment was not used since this is not an experiment. The only thing that can be used is random sampling, which was used. 
+
+* * *
+
+## Part 2: Research question
+
+The research question that I want to analyze in this project is if with the critics score and runtime the audience score can be predicted. I believe that the critics score is important since a movie critic will be able to predict how an audience will react, and I believe that the runtime is an important factor since an audience will not enjoy a shorter movie, and will be more satisfied by a longer movie. The research question is interesting since results from this report can be used to find the best runtime, so that the audiences will be neither exhausted from a tediously long movie nor disappointed by a movie that is to short. It will also show how important the critics score is for a movie. The research question is also interesting because studios will know which movies will be financially successful upon release and should be supported, and which will fail and should not be released. 
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+The two variables that will be used in the analysis are the runtime (runtime) and the critics score (critics_score). I will now conduct an exploratory data analysis on runtime and critics_score. 
+```{r}
+ggplot(data=movies, (aes(x = critics_score, y=runtime)))+geom_point()
+criticsscore<-movies%>%select(critics_score)
+summary(criticsscore)
+runtime<-movies%>%select(runtime)
+summary(runtime)
+
+cor(criticsscore, runtime,use = "complete.obs")
+```
+The first line of code creates a graph of the two variables. There is a weak positive linear relationship between the two. There is a lot of scatter between the two variables. The plot shows that there is likely no colinearity between the two variables. The second line selects the critics score into a variable named criticsscore. Then, the next line of code produces the summary statistics of criticsscore. Next, the fourth line produces a variable named runtime which contains the movie runtimes, and the fifth line outputs the summary statistics for runtime. The last line finds the correlation between the two variables runtime and critics_score which is 0.17, too low to show colinearity between the two variables. This means that I can use the variables in my model without damaging the output. 
+
+* * *
+
+## Part 4: Modeling
+
+I will predict the audience's score (audience_score) from the critic's score(critics_score) and runtime(runtime) of the movie. 
+```{r}
+model <- lm(audience_score~ critics_score+runtime, data = movies)
+summary(model)
+
+```
+In the code above, I modeled the variable from the dataset named audience_score with the variables from the dataset named critics_score and runtime. The variables that I chose were chosen since the audience score will be affected by the score a critic gives it, meaning that the audience will be biased to if the movie is good or bad, and the runtime was chosen since an audience may enjoy a longer movie more than a shorter one. I believe that these two are the most important variables that were in the dataset to impact an audience's ratings, since they will directly affect the audience experience more than the actors and actresses and what awards they won. I also believe these are better than the IMDB score since that score is set after the movie has been to theaters, and I am trying to determine how well received a new movie will be by the audience. I cannot use data that will not be available when the movie is released. I also believe that both these variables are needed to accurately predict the audience score, so I used multivariate linear regression. The summary of the model shows that the intercept is 27.11582. There is no meaning to the intercept in context because a movie with 0 runtime cannot be rated anything by the audience. The critic's score is multiplied by 0.49397 and runtime is multiplied by 0.06381. The critic's score and runtime both have p-values below 0.05 so they are statistically significant. The adjusted R-squared is 0.4979, so 49.79% of the variance is explained by my model. The F-Statistic p-value is also much lower than 0.05, so my model is statistically significant. 
+
+* * *
+
+## Part 5: Prediction
+
+The movie that I have chosed from 2016 that is not included in the model is 'Passengers'. The audience score is 70%, so 70, and the runtime is 1 hour 56 minutes, so 116 minutes. 41% of critics liked the movie, so the critics score is 41. The data for the movie comes from IMDB and metacritic. The runtime comes from the Google information of the movie. I will now place it in my model and predict the audience score. 
+
+```{r}
+test <- data.frame(critics_score=41, runtime=116)
+predict(model, test)
+```
+
+Above, the test variable is created and stored in test, and then the predict variable uses the test variable to predict the audience score for the movie 'Passengers'. The audience score prediction is 54.77055. Clearly the model is not perfect, since the audience rated it 70, but that is to be expected since the model only accounts for 49% of the variability. Also, this is an extrapolation. This is just a point estimate and it must be further analyzed with a prediction interval. 
+
+```{r}
+(27.11582+0.49397*41+0.06381*116)+qt(0.025, df=648)
+(27.11582+0.49397*41+0.06381*116)-qt(0.025, df=648)
+```
+
+The confidence interval is a 95% confidence interval. It does not contain the actual value, which means that the model has not predicted the correct audience score. 
+
+* * *
+
+## Part 6: Conclusion
+
+In this paper, I have discovered that the critics score and the runtime account for 49.79% of the variability in the data. This is impressive, as it accounts for nearly half of the variability, but it is not enough to build a reliable model, as the model failed on the test statistic. More variables must be inserted into the model than the critics score and the runtime that will account for more of the variability. However, the variables inserted must be known at the time of the release of the movie to predict the reception of the movie when it is released. A particular variable that would be helpful may be the budget of the movie, as a larger budget means better special effects and marketing which an audience will enjoy more than worse special effects. A larger budget is also the sign of the support of a large studio, franchise, or company that already has an established fanbase, and that would help audience's rate the movie better as they are already familiar with the movie's premise. 
